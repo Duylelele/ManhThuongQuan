@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hiển thị thông tin từ CSV</title>
+    <style>
+        /* Cấu hình cơ bản cho giao diện */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            color: white; /* Màu chữ trắng */
+            overflow: hidden; /* Loại bỏ thanh cuộn */
+            background-color: black; /* Màu nền đen */
+        }
+
+        /* Định dạng phần chứa chữ chạy */
+        .credits {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        /* Hiệu ứng cuộn chữ */
+        .scrolling-text {
+            animation: scroll-up 120s linear infinite; 
+            font-size: 30px; 
+        }
+
+        /* Tạo hiệu ứng cuộn từ dưới lên */
+        @keyframes scroll-up {
+            from {
+                transform: translateY(100%); /* Bắt đầu từ dưới */
+            }
+            to {
+                transform: translateY(-100%); /* Kết thúc ở trên */
+            }
+        }
+
+        /* Định dạng hiển thị nội dung CSV */
+        #credit-content p {
+            margin: 5px 0;
+            line-height: 1.8;
+            font-size: 24px; /* Tăng kích thước chữ */
+        }
+
+        /* Thêm khoảng cách giữa các cột */
+        .column {
+            display: inline-block;
+            margin-right: 20px; /* Khoảng cách giữa các cột */
+        }
+
+        /* Định dạng logo */
+        .logo {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 200px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Nút để tải file CSV lên từ máy tính -->
+    <button id="csvFile">Chọn file CSV</button>
+
+    <!-- Phần chứa chữ chạy -->
+    <div class="credits">
+        <div class="scrolling-text" id="credit-content">
+            <!-- Nội dung sẽ được thêm vào đây bằng JavaScript -->
+        </div>
+    </div>
+
+    <!-- Thêm logo vào góc phải trên cùng -->
+    <img src="C:\Users\HP X360\Documents\ManhThuongQuan\Logo_THPT_Thong_Linh.png" alt="Logo" class="logo">
+
+    <script>
+        let fileHandle;
+
+        // Hàm mở file và đọc nội dung
+        async function openFile() {
+            [fileHandle] = await window.showOpenFilePicker({
+                types: [{
+                    description: 'CSV Files',
+                    accept: { 'text/csv': ['.csv'] }
+                }]
+            });
+
+            const file = await fileHandle.getFile();
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                processCSV(content);
+            };
+            reader.readAsText(file, 'UTF-8'); // Đọc file dưới dạng text với mã hóa UTF-8
+
+            // Theo dõi file để tự động cập nhật khi có chỉnh sửa
+            watchFile();
+        }
+
+        // Hàm theo dõi file và tự động làm mới khi có chỉnh sửa
+        async function watchFile() {
+            if (!fileHandle) return;
+
+            const watcher = async () => {
+                const file = await fileHandle.getFile();
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const content = e.target.result;
+                    processCSV(content);
+                };
+                reader.readAsText(file, 'UTF-8'); // Đọc file dưới dạng text với mã hóa UTF-8
+
+                // Tiếp tục theo dõi
+                setTimeout(watcher, 5000);
+            };
+            watcher();
+        }
+
+        // Hàm xử lý dữ liệu CSV và hiển thị nó lên trang
+        function processCSV(data) {
+            let rows = data.split("\n"); // Chia file CSV thành các dòng
+            let htmlContent = ''; // Biến để lưu nội dung HTML
+
+            // Lặp qua từng dòng của file CSV
+            rows.forEach(row => {
+                let columns = row.split(","); // Chia dòng thành các cột
+                let rowContent = ''; // Biến để lưu nội dung của hàng
+
+                // Lặp qua từng cột trong hàng
+                columns.forEach(column => {
+                    // Nếu cột không rỗng hoặc không chỉ chứa khoảng trắng thì mới in ra
+                    if (column.trim() !== '') {
+                        rowContent += `<span class="column">${column.trim()}</span>`; // Thêm nội dung của cột vào hàng
+                    }
+                });
+
+                // Nếu hàng có nội dung, thêm hàng vào HTML và xuống dòng
+                if (rowContent.trim() !== '') {
+                    htmlContent += `<p>${rowContent.trim()}</p>`;
+                }
+            });
+
+            // Đưa nội dung vào phần tử HTML có id "credit-content"
+            document.getElementById("credit-content").innerHTML = htmlContent;
+        }
+
+        // Gắn sự kiện cho nút bấm để mở file
+        document.getElementById('csvFile').addEventListener('click', openFile);
+    </script>
+
+</body>
+</html>
